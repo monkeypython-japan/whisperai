@@ -35,9 +35,25 @@ OpenAI Whisper（large モデル）を使ったオフライン動画字幕生成
 - 音声認識: openai-whisper（large モデル）
 - 動画処理: ffmpeg / ffprobe
 
-## 開発コマンド（実装後に更新）
+## 開発コマンド
 
 ```bash
-# 実行例
-python whisperai.py <動画ファイル>
+# 仮想環境のセットアップ（初回のみ）
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# 仮想環境の有効化（ターミナルを開き直した場合）
+source .venv/bin/activate
+
+# 実行例（字幕トラック一覧表示）
+python whisperai.py "<動画ファイル>"
+
+# 実行例（字幕を英語に翻訳して出力）
+python whisperai.py "<動画ファイル>" en
+
+# 実行例（字幕なし動画を Whisper で音声認識）
+python whisperai.py "<動画ファイル>"
 ```
+
+> パスに日本語やスペースが含まれる場合はダブルクォートで囲む。
