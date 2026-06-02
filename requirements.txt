@@ -1,4 +1,4 @@
-openai-whisper
+mlx-whisper
 ffmpeg-python
 transformers
 sentencepiece
