@@ -1,39 +1,25 @@
-import re
 from progress import tick
-
-
-def _parse_srt_blocks(srt_text: str) -> list[dict]:
-    """SRT テキストをブロック（番号・タイムコード・テキスト）に分解"""
-    blocks = []
-    pattern = re.compile(
-        r"(\d+)\s*\n"
-        r"(\d{2}:\d{2}:\d{2}[,\.]\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*\n"
-        r"(.*?)(?=\n\n\d+\s*\n|\Z)",
-        re.DOTALL,
-    )
-    for m in pattern.finditer(srt_text.strip()):
-        blocks.append({
-            "index": m.group(1),
-            "timecode": m.group(2),
-            "text": m.group(3).strip(),
-        })
-    return blocks
-
-
-def _build_srt(blocks: list[dict]) -> str:
-    parts = []
-    for b in blocks:
-        parts.append(f"{b['index']}\n{b['timecode']}\n{b['text']}\n")
-    return "\n".join(parts)
+from srt_utils import parse_srt_blocks, build_srt
+from filter import filter_blocks
 
 
 def translate_srt_to_english(srt_text: str) -> str:
     """SRT テキストの本文のみを英語に翻訳して返す（タイムコード保持）"""
     from transformers import MarianMTModel, MarianTokenizer
 
-    blocks = _parse_srt_blocks(srt_text)
+    blocks = parse_srt_blocks(srt_text)
     if not blocks:
         return srt_text
+
+    # 翻訳前にフィルタリング
+    before = len(blocks)
+    blocks = filter_blocks(blocks)
+    after = len(blocks)
+    if before != after:
+        print(f"フィルタ: {before - after} ブロックを除去 ({before} → {after})")
+
+    if not blocks:
+        return ""
 
     model_name = "Helsinki-NLP/opus-mt-mul-en"
     print("翻訳モデルを読み込み中 ", end="", flush=True)
@@ -57,4 +43,4 @@ def translate_srt_to_english(srt_text: str) -> str:
     for b, t in zip(blocks, translated_texts):
         b["text"] = t
 
-    return _build_srt(blocks)
+    return build_srt(blocks)
