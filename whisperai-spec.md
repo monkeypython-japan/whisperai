@@ -40,12 +40,15 @@ whisperai.py <動画ファイル> [言語コード] [--dump-srt]
 
 - 空ブロック
 - クレジット・ノイズパターン（`Sous-titrage`、`subtitled by`、`OpenSubtitles` など）
+- `©` 記号を含むブロック（配布者の透かし・Whisper ハルシネーションによる著作権表記）
+- `transcript <名前>` 形式のブロック（Whisper ハルシネーションによるクレジット）
 - 連続する完全一致テキスト（繰り返しハルシネーション）
 
 ## モデル管理
 
 - モデルは初回起動時に一度だけ Hugging Face から自動ダウンロード
 - 使用モデル: `mlx-community/whisper-large-v3-mlx`（Apple MLX 最適化版、M シリーズ GPU 使用）
+- `word_timestamps=True` を有効化し、単語単位のタイムスタンプで各セグメントの終端を精確に決定する（30秒チャンク境界へのスナップを防止）
 
 ## 進捗表示
 
