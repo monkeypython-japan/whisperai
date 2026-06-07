@@ -10,16 +10,49 @@ from srt_utils import parse_srt_blocks, build_srt
 from filter import filter_blocks
 
 
+HELP_TEXT = """使い方: whisperai.py <動画ファイル> [言語コード] [オプション]
+
+引数:
+  動画ファイル    処理する動画ファイルのパス
+  言語コード      字幕トラックの言語コード（en / fr / ja など）
+                  省略すると字幕トラック一覧を表示して終了
+
+オプション:
+  --translate     字幕を英語に翻訳して出力（字幕トラックありの場合のみ有効）
+  --help          このヘルプを表示して終了
+
+動作:
+  字幕トラックあり
+    言語コード省略  → 字幕トラック一覧を表示して終了
+    言語コード指定  → 指定言語の字幕をそのまま SRT として出力
+    --translate 付き → 指定言語の字幕を英語に翻訳して SRT として出力
+
+  字幕トラックなし
+    Whisper で音声認識し、検出した言語で SRT を出力（翻訳なし）
+
+出力ファイル:
+  {動画ファイルと同じフォルダ}/{ベース名}.{言語コード}.srt
+
+例:
+  whisperai.py "movie.mkv"
+  whisperai.py "movie.mkv" fr
+  whisperai.py "movie.mkv" fr --translate
+  whisperai.py "movie.mp4"
+"""
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     flags = [a for a in sys.argv[1:] if a.startswith("--")]
-    dump_srt = "--dump-srt" in flags
+
+    if "--help" in flags:
+        print(HELP_TEXT, end="")
+        sys.exit(0)
+
+    translate = "--translate" in flags
 
     if len(args) < 1:
-        print("使い方: whisperai.py <動画ファイル> [言語コード] [--dump-srt]")
-        print("  例: whisperai.py movie.mp4")
-        print("  例: whisperai.py movie.mp4 en")
-        print("  例: whisperai.py movie.mp4 en --dump-srt  # 翻訳前の生SRTを保存")
+        print(HELP_TEXT, end="")
         sys.exit(1)
 
     video_path = args[0]
@@ -67,16 +100,13 @@ def main():
         blocks = filter_blocks(blocks)
         srt_text = build_srt(blocks)
 
-        # --dump-srt: 翻訳前のフィルター済みSRTを保存
-        if dump_srt:
-            raw_path = build_output_path(video_path, f"{lang_code}.raw")
-            write_srt(raw_path, srt_text)
-            print(f"生SRT保存: {raw_path}")
+        if translate:
+            # --translate 指定時のみ英語に翻訳
+            srt_text = translate_srt_to_english(srt_text)
+            output_path = build_output_path(video_path, "en")
+        else:
+            output_path = build_output_path(video_path, lang_code)
 
-        # 英語に翻訳
-        srt_text = translate_srt_to_english(srt_text)
-
-        output_path = build_output_path(video_path, "en")
         write_srt(output_path, srt_text)
 
     else:
@@ -91,15 +121,8 @@ def main():
         # フィルター適用
         blocks = parse_srt_blocks(srt_text)
         blocks = filter_blocks(blocks)
-
-        # --dump-srt: フィルター済みの生SRTを保存
-        if dump_srt:
-            raw_srt = build_srt(blocks)
-            raw_path = build_output_path(video_path, f"{detected_lang}.raw")
-            write_srt(raw_path, raw_srt)
-            print(f"生SRT保存: {raw_path}")
-
         srt_text = build_srt(blocks)
+
         print(f"\n検出言語: {detected_lang}")
         output_path = build_output_path(video_path, detected_lang)
         write_srt(output_path, srt_text)
