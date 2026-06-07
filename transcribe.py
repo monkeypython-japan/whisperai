@@ -32,6 +32,7 @@ def transcribe(video_path: str) -> tuple[str, str]:
         video_path,
         path_or_hf_repo=MLX_MODEL,
         verbose=False,
+        word_timestamps=True,
         # 無音区間のハルシネーション抑制
         no_speech_threshold=0.6,
         condition_on_previous_text=False,

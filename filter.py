@@ -13,6 +13,8 @@ _CREDIT_PATTERNS = [
     r"opensubtitles",
     r"subscene",
     r"addic7ed",
+    r"©",
+    r"transcript\s+\w",
 ]
 _CREDIT_RE = re.compile("|".join(_CREDIT_PATTERNS), re.IGNORECASE)
 
