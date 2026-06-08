@@ -15,11 +15,15 @@ def _segments_to_srt(segments: list) -> str:
         return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
     lines = []
-    for i, seg in enumerate(segments, 1):
+    idx = 0
+    for seg in segments:
+        text = seg["text"].strip()
+        if not text or seg["end"] <= seg["start"]:
+            continue
+        idx += 1
         start = fmt_time(seg["start"])
         end = fmt_time(seg["end"])
-        text = seg["text"].strip()
-        lines.append(f"{i}\n{start} --> {end}\n{text}\n")
+        lines.append(f"{idx}\n{start} --> {end}\n{text}\n")
     return "\n".join(lines)
 
 

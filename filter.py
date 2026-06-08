@@ -31,6 +31,10 @@ def filter_blocks(blocks: list[dict]) -> list[dict]:
         if not text:
             continue
 
+        # 誤パースされたブロックを除去（テキストに --> が含まれる場合は SRT 構造が混入している）
+        if "-->" in text:
+            continue
+
         # 既知クレジットパターンを除去
         if _CREDIT_RE.search(text):
             continue
