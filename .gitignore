@@ -6,3 +6,4 @@ build/
 .venv/
 venv/
 *.srt
+.DS_Store
