@@ -1,6 +1,22 @@
 from progress import tick
 from srt_utils import parse_srt_blocks, build_srt
 from filter import filter_blocks
+import config
+
+
+# ffprobe の3文字コード → ISO 639-1
+_TO_ISO2 = {
+    "eng": "en", "jpn": "ja", "fra": "fr", "fre": "fr", "deu": "de", "ger": "de",
+    "spa": "es", "ita": "it", "por": "pt", "rus": "ru", "zho": "zh", "chi": "zh",
+    "kor": "ko", "nld": "nl", "dut": "nl", "swe": "sv", "dan": "da", "nor": "no",
+    "fin": "fi", "pol": "pl", "tur": "tr", "ara": "ar", "hin": "hi", "tha": "th",
+    "vie": "vi", "ces": "cs", "cze": "cs", "hun": "hu",
+}
+
+
+def _to_iso2(lang: str) -> str:
+    lang = lang.lower()
+    return _TO_ISO2.get(lang, lang)
 
 
 # ISO 639-1 / ffprobe の3文字コード → NLLB(FLORES-200) コード
@@ -30,21 +46,35 @@ _NLLB_CODES = {
     "hu": "hun_Latn", "hun": "hun_Latn",
 }
 
-_NLLB_MODEL = "facebook/nllb-200-distilled-600M"
+_NLLB_MODEL = config.get("models", "translation_nllb")
 
 
 def _to_nllb_code(lang: str) -> str | None:
     return _NLLB_CODES.get(lang.lower())
 
 
-def _translate_marian_to_english(texts: list[str]) -> list[str]:
-    """opus-mt-mul-en による多言語→英語翻訳"""
+def _translate_marian_to_english(texts: list[str], src_lang: str) -> list[str]:
+    """opus-mt による英語翻訳。翻訳元言語の専用モデルがあれば優先し、無ければ多言語モデル"""
     from transformers import MarianMTModel, MarianTokenizer
 
-    model_name = "Helsinki-NLP/opus-mt-mul-en"
-    print("翻訳モデルを読み込み中 ", end="", flush=True)
-    tokenizer = MarianTokenizer.from_pretrained(model_name)
-    model = MarianMTModel.from_pretrained(model_name)
+    fallback = config.get("models", "translation_multilingual")
+    src = _to_iso2(src_lang)
+    candidates = []
+    if src in config.get("models", "marian_source_langs"):
+        candidates.append(f"Helsinki-NLP/opus-mt-{src}-en")
+    candidates.append(fallback)
+
+    tokenizer = model = None
+    for model_name in candidates:
+        print(f"翻訳モデルを読み込み中 ({model_name}) ", end="", flush=True)
+        try:
+            tokenizer = MarianTokenizer.from_pretrained(model_name)
+            model = MarianMTModel.from_pretrained(model_name)
+            break
+        except Exception:
+            print("→ 取得できないため次の候補を試します")
+    if model is None:
+        raise RuntimeError("翻訳モデルの読み込みに失敗しました。")
     tick()
 
     batch_size = 20
@@ -115,7 +145,7 @@ def translate_srt(srt_text: str, src_lang: str, target_lang: str = "en") -> str:
     texts = [b["text"] for b in blocks]
 
     if target_lang == "en":
-        translated_texts = _translate_marian_to_english(texts)
+        translated_texts = _translate_marian_to_english(texts, src_lang)
     else:
         translated_texts = _translate_nllb(texts, src_lang, target_lang)
 

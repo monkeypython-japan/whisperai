@@ -2,7 +2,9 @@ import subprocess
 from pathlib import Path
 from progress import tick
 
-MLX_MODEL = "mlx-community/whisper-large-v3-mlx"
+import config
+
+MLX_MODEL = config.get("models", "whisper")
 
 
 def _segments_to_srt(segments: list) -> str:

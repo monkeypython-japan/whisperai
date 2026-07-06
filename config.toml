@@ -1,0 +1,35 @@
+# whisperai 設定ファイル
+# 値を省略した場合は config.py のデフォルト値が使われる
+
+[models]
+# 音声認識モデル（mlx-whisper）
+whisper = "mlx-community/whisper-large-v3-mlx"
+
+# 英語への翻訳モデル（言語別モデルが無い場合のフォールバック）
+translation_multilingual = "Helsinki-NLP/opus-mt-mul-en"
+
+# 英語以外への翻訳モデル
+translation_nllb = "facebook/nllb-200-distilled-600M"
+
+# 英語への翻訳で Helsinki-NLP/opus-mt-<言語>-en の言語別モデルを優先する言語
+marian_source_langs = [
+    "fr", "de", "es", "it", "nl", "pt", "ru", "pl", "sv", "da",
+    "fi", "hu", "cs", "tr", "ar", "vi", "zh", "ja", "ko",
+]
+
+[filter]
+# 除去する字幕クレジット・ノイズの正規表現パターン（大文字小文字無視）
+credit_patterns = [
+    "sous-titrage",
+    "subtitl(e|ing|ed) by",
+    "sync(ed|hronized)? (by|and corrected)",
+    "translated by",
+    "ripped by",
+    "encoded by",
+    "www\\.",
+    "opensubtitles",
+    "subscene",
+    "addic7ed",
+    "©",
+    "transcript\\s+\\w",
+]

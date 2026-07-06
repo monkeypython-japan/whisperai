@@ -1,22 +1,9 @@
 import re
 
+import config
 
-# 既知のクレジット・ノイズパターン（大文字小文字無視）
-_CREDIT_PATTERNS = [
-    r"sous-titrage",
-    r"subtitl(e|ing|ed) by",
-    r"sync(ed|hronized)? (by|and corrected)",
-    r"translated by",
-    r"ripped by",
-    r"encoded by",
-    r"www\.",
-    r"opensubtitles",
-    r"subscene",
-    r"addic7ed",
-    r"©",
-    r"transcript\s+\w",
-]
-_CREDIT_RE = re.compile("|".join(_CREDIT_PATTERNS), re.IGNORECASE)
+# 既知のクレジット・ノイズパターン（大文字小文字無視、config.toml で変更可能）
+_CREDIT_RE = re.compile("|".join(config.get("filter", "credit_patterns")), re.IGNORECASE)
 
 
 def filter_blocks(blocks: list[dict]) -> list[dict]:

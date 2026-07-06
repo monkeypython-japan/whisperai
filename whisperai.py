@@ -57,7 +57,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--transcribe", action="store_true",
         help="字幕トラックを無視して Whisper で音声認識を強制実行",
     )
+    parser.add_argument(
+        "--force", action="store_true",
+        help="既存の SRT ファイルを確認せずに上書きする",
+    )
     return parser
+
+
+def confirm_overwrite(path: str, force: bool) -> bool:
+    """出力先が既存の場合に上書き確認する。上書きしてよければ True"""
+    if force or not os.path.exists(path):
+        return True
+    answer = input(f"出力先が既に存在します: {path}\n上書きしますか? [y/N]: ").strip().lower()
+    return answer in ("y", "yes")
 
 
 def collect_videos(paths: list[str]) -> list[str]:
@@ -82,7 +94,8 @@ def collect_videos(paths: list[str]) -> list[str]:
 
 
 def process_video(video_path: str, lang_code: str | None,
-                  translate_target: str | None, force_transcribe: bool) -> bool:
+                  translate_target: str | None, force_transcribe: bool,
+                  force_overwrite: bool = False) -> bool:
     """1本の動画を処理する。成功なら True"""
     # 字幕トラックを確認
     print("字幕トラックを確認中...", end="", flush=True)
@@ -139,6 +152,9 @@ def process_video(video_path: str, lang_code: str | None,
         else:
             output_path = build_output_path(video_path, lang_code)
 
+        if not confirm_overwrite(output_path, force_overwrite):
+            print("スキップしました。")
+            return True
         write_srt(output_path, srt_text)
 
     else:
@@ -160,6 +176,9 @@ def process_video(video_path: str, lang_code: str | None,
 
         print(f"\n検出言語: {detected_lang}")
         output_path = build_output_path(video_path, detected_lang)
+        if not confirm_overwrite(output_path, force_overwrite):
+            print("スキップしました。")
+            return True
         write_srt(output_path, srt_text)
 
     return True
@@ -196,7 +215,7 @@ def main():
         sys.exit(1)
 
     if len(videos) == 1:
-        ok = process_video(videos[0], lang_code, translate_target, force_transcribe)
+        ok = process_video(videos[0], lang_code, translate_target, force_transcribe, ns.force)
         sys.exit(0 if ok else 1)
 
     # 一括処理
@@ -204,7 +223,7 @@ def main():
     failed = []
     for i, v in enumerate(videos, 1):
         print(f"=== [{i}/{len(videos)}] {v}")
-        if not process_video(v, lang_code, translate_target, force_transcribe):
+        if not process_video(v, lang_code, translate_target, force_transcribe, ns.force):
             failed.append(v)
         print()
 
