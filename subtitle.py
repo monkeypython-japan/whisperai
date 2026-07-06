@@ -4,6 +4,19 @@ import tempfile
 import os
 
 
+# ビットマップ（画像）字幕のコーデック。テキストとして抽出できない
+IMAGE_SUBTITLE_CODECS = {
+    "hdmv_pgs_subtitle",  # Blu-ray PGS
+    "dvd_subtitle",       # DVD VobSub
+    "dvb_subtitle",
+    "xsub",
+}
+
+
+def is_image_subtitle(track: dict) -> bool:
+    return track["codec"] in IMAGE_SUBTITLE_CODECS
+
+
 def get_subtitle_tracks(video_path: str) -> list[dict]:
     """動画ファイルの字幕トラック一覧を返す"""
     cmd = [
@@ -39,7 +52,8 @@ def print_tracks(tracks: list[dict]) -> None:
     print("字幕トラック一覧:")
     for t in tracks:
         title_str = f" ({t['title']})" if t["title"] else ""
-        print(f"  [{t['index']}] 言語: {t['lang']}{title_str}  形式: {t['codec']}")
+        image_str = "（画像字幕・抽出不可）" if is_image_subtitle(t) else ""
+        print(f"  [{t['index']}] 言語: {t['lang']}{title_str}  形式: {t['codec']}{image_str}")
 
 
 def extract_srt(video_path: str, stream_index: int) -> str:
@@ -65,8 +79,9 @@ def extract_srt(video_path: str, stream_index: int) -> str:
 
 
 def find_track_by_lang(tracks: list[dict], lang_code: str) -> dict | None:
-    """言語コードに一致するトラックを返す（最初の一致）"""
-    for t in tracks:
-        if t["lang"].lower().startswith(lang_code.lower()):
+    """言語コードに一致するトラックを返す（テキスト字幕を優先、次いで最初の一致）"""
+    matches = [t for t in tracks if t["lang"].lower().startswith(lang_code.lower())]
+    for t in matches:
+        if not is_image_subtitle(t):
             return t
-    return None
+    return matches[0] if matches else None

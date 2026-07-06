@@ -3,7 +3,7 @@ import sys
 import os
 from pathlib import Path
 
-from subtitle import get_subtitle_tracks, print_tracks, extract_srt, find_track_by_lang
+from subtitle import get_subtitle_tracks, print_tracks, extract_srt, find_track_by_lang, is_image_subtitle
 from translate import translate_srt
 from transcribe import transcribe
 from output import build_output_path, write_srt
@@ -98,6 +98,12 @@ def process_video(video_path: str, lang_code: str | None,
         if track is None:
             print(f"エラー: 言語 '{lang_code}' の字幕トラックが見つかりません。")
             print_tracks(tracks)
+            return False
+
+        if is_image_subtitle(track):
+            print(f"エラー: トラック [{track['index']}] ({track['lang']}) は画像字幕（{track['codec']}）のため、テキストとして抽出できません。")
+            print("音声認識で字幕を生成する場合は --transcribe を指定してください。")
+            print(f"  例: whisperai.py \"{video_path}\" --transcribe")
             return False
 
         print(f"字幕トラック [{track['index']}] ({track['lang']}) を抽出中 ", end="", flush=True)
