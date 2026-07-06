@@ -47,15 +47,15 @@ def _translate_marian_to_english(texts: list[str]) -> list[str]:
     model = MarianMTModel.from_pretrained(model_name)
     tick()
 
-    print("翻訳中 ", end="", flush=True)
     batch_size = 20
     out = []
     for i in range(0, len(texts), batch_size):
+        print(f"\r翻訳中 [{min(i + batch_size, len(texts))}/{len(texts)}]", end="", flush=True)
         batch = texts[i:i + batch_size]
         tokens = tokenizer(batch, return_tensors="pt", padding=True, truncation=True, max_length=512)
         translated = model.generate(**tokens)
         out.extend(tokenizer.batch_decode(translated, skip_special_tokens=True))
-        tick()
+    print()
     return out
 
 
@@ -77,10 +77,10 @@ def _translate_nllb(texts: list[str], src_lang: str, tgt_lang: str) -> list[str]
 
     tgt_token_id = tokenizer.convert_tokens_to_ids(tgt)
 
-    print("翻訳中 ", end="", flush=True)
     batch_size = 16
     out = []
     for i in range(0, len(texts), batch_size):
+        print(f"\r翻訳中 [{min(i + batch_size, len(texts))}/{len(texts)}]", end="", flush=True)
         batch = texts[i:i + batch_size]
         tokens = tokenizer(batch, return_tensors="pt", padding=True, truncation=True, max_length=512)
         translated = model.generate(
@@ -89,7 +89,7 @@ def _translate_nllb(texts: list[str], src_lang: str, tgt_lang: str) -> list[str]
             max_length=512,
         )
         out.extend(tokenizer.batch_decode(translated, skip_special_tokens=True))
-        tick()
+    print()
     return out
 
 

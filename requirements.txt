@@ -3,3 +3,5 @@ ffmpeg-python
 transformers
 sentencepiece
 torch
+srt
+pytest

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import sys
 import os
 from pathlib import Path
@@ -13,21 +14,7 @@ from filter import filter_blocks
 
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".m4v", ".avi", ".mov", ".webm", ".ts", ".wmv"}
 
-HELP_TEXT = """使い方: whisperai.py <動画ファイル|フォルダ>... [言語コード] [オプション]
-
-引数:
-  動画ファイル    処理する動画ファイルのパス（複数指定可）
-  フォルダ        フォルダ内の動画ファイルを一括処理（サブフォルダも対象）
-  言語コード      字幕トラックの言語コード（en / fr / ja など）
-                  省略すると字幕トラック一覧を表示して終了
-
-オプション:
-  --translate[=言語]  字幕を指定言語に翻訳して出力（省略時 en、字幕トラックありの場合のみ有効）
-                  例: --translate / --translate=ja / --translate=en
-  --transcribe    字幕トラックを無視して Whisper で音声認識を強制実行
-  --help          このヘルプを表示して終了
-
-動作:
+EPILOG = """動作:
   字幕トラックあり
     言語コード省略  → 字幕トラック一覧を表示して終了
     言語コード指定  → 指定言語の字幕をそのまま SRT として出力
@@ -49,6 +36,28 @@ HELP_TEXT = """使い方: whisperai.py <動画ファイル|フォルダ>... [言
   whisperai.py "season1/" en --translate=ja
   whisperai.py "ep1.mkv" "ep2.mkv" en
 """
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="whisperai.py",
+        description="動画ファイルからオフラインで SRT 字幕ファイルを生成する",
+        epilog=EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "inputs", nargs="+", metavar="<動画ファイル|フォルダ|言語コード>",
+        help="動画ファイル・フォルダ（複数指定可）。2〜3文字の英字は字幕トラックの言語コードとして解釈",
+    )
+    parser.add_argument(
+        "--translate", nargs="?", const="en", default=None, metavar="言語",
+        help="字幕を指定言語に翻訳して出力（省略時 en。--translate=ja / --translate ja）",
+    )
+    parser.add_argument(
+        "--transcribe", action="store_true",
+        help="字幕トラックを無視して Whisper で音声認識を強制実行",
+    )
+    return parser
 
 
 def collect_videos(paths: list[str]) -> list[str]:
@@ -157,34 +166,18 @@ def process_video(video_path: str, lang_code: str | None,
 
 
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    flags = [a for a in sys.argv[1:] if a.startswith("--")]
+    parser = build_parser()
+    ns = parser.parse_args()
 
-    if "--help" in flags:
-        print(HELP_TEXT, end="")
-        sys.exit(0)
-
-    translate_target = None
-    for f in flags:
-        if f == "--translate":
-            translate_target = "en"
-        elif f.startswith("--translate="):
-            translate_target = f.split("=", 1)[1].lower()
-            if not translate_target:
-                print("エラー: --translate= の言語コードが空です。例: --translate=ja")
-                sys.exit(1)
-    force_transcribe = "--transcribe" in flags
-
-    if len(args) < 1:
-        print(HELP_TEXT, end="")
-        sys.exit(1)
+    translate_target = ns.translate.lower() if ns.translate else None
+    force_transcribe = ns.transcribe
 
     # 位置引数の解釈:
     #   存在するファイル・フォルダ → 入力
     #   それ以外の 2〜3 文字の引数 → 言語コード
     input_paths = []
     lang_code = None
-    for a in args:
+    for a in ns.inputs:
         if os.path.exists(a):
             input_paths.append(a)
         elif lang_code is None and 2 <= len(a) <= 3 and a.isalpha():
