@@ -18,23 +18,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-OpenAI Whisper（large モデル）を使ったオフライン動画字幕生成 CLI ツール。動画ファイルを受け取り、SRT ファイルを出力する。
-
-## アーキテクチャ（予定）
-
-- **CLI エントリポイント**: コマンドライン引数で動画ファイルを受け取る
-- **字幕トラック検出**: ffprobe で動画の字幕ストリームを確認
-  - 日本語字幕あり → 報告して終了
-  - 英語字幕あり → 字幕を SRT 形式で抽出して終了
-  - それ以外 → Whisper で音声認識
-- **モデル管理**: `~/Library/Application Support/whisperai/` にモデルをキャッシュ（初回のみダウンロード）
-- **出力**: 動画ファイルと同じフォルダに `{basename}.{lang}.srt` を生成
-
-## 技術スタック
-
-- 言語: Python（予定）
-- 音声認識: openai-whisper（large モデル）
-- 動画処理: ffmpeg / ffprobe
+オフライン動画字幕生成 CLI ツール。動画ファイルを受け取り、SRT ファイルを出力する。
+仕様（アーキテクチャ・動作・技術スタック）の正本は [`whisperai-spec.md`](whisperai-spec.md) を参照。
 
 ## 開発コマンド
 
