@@ -43,6 +43,8 @@ def transcribe(video_path: str) -> tuple[str, str]:
         no_speech_threshold=0.6,
         condition_on_previous_text=False,
         initial_prompt="",
+        # 2秒以上の無音区間はデコード自体をスキップする(word_timestamps前提)
+        hallucination_silence_threshold=2.0,
     )
     tick()
 
