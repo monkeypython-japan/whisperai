@@ -2,6 +2,7 @@
 status: resolved
 tags:
   - project/whisperai
+modified: 2026-07-07
 ---
 
 # transformers 新版で `pipeline("translation")` が使えない

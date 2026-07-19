@@ -3,6 +3,7 @@ status: accepted
 date: 2026-06
 tags:
   - project/whisperai
+modified: 2026-07-07
 ---
 
 # 0001. openai-whisper から mlx-whisper への移行

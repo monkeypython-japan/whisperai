@@ -2,6 +2,7 @@
 status: resolved
 tags:
   - project/whisperai
+modified: 2026-07-07
 ---
 
 # macOS の Homebrew Python では `pip install` が externally-managed-environment エラーになる

@@ -2,6 +2,7 @@
 status: resolved
 tags:
   - project/whisperai
+modified: 2026-07-07
 ---
 
 # ネットワークドライブ（SMB）への SRT 書き出しがタイムアウトすることがある

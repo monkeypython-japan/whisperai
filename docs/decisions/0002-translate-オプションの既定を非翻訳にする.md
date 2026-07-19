@@ -3,6 +3,7 @@ status: accepted
 date: 2026-06
 tags:
   - project/whisperai
+modified: 2026-07-07
 ---
 
 # 0002. `--translate` を既定 OFF・明示指定制にする
