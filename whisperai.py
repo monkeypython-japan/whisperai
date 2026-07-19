@@ -22,7 +22,10 @@ EPILOG = """動作:
     --transcribe 付き → 字幕トラックを無視して Whisper で音声認識
 
   字幕トラックなし
-    Whisper で音声認識し、検出した言語で SRT を出力（翻訳なし）
+    言語コード省略  → Whisper で音声認識し、検出した言語で SRT を出力（翻訳なし）
+    言語コード指定  → その言語を指定してWhisperで音声認識(自動検出はスキップ)。
+                     無音区間等での言語誤検出対策として、音声言語が分かっている
+                     場合は指定を推奨
 
 出力ファイル:
   {動画ファイルと同じフォルダ}/{ベース名}.{言語コード}.srt
@@ -164,7 +167,7 @@ def process_video(video_path: str, lang_code: str | None,
         else:
             print("字幕トラックなし。Whisper で音声認識を行います。")
         try:
-            srt_text, detected_lang = transcribe(video_path)
+            srt_text, detected_lang = transcribe(video_path, language=lang_code)
         except RuntimeError as e:
             print(f"\nエラー: {e}")
             return False
@@ -175,7 +178,9 @@ def process_video(video_path: str, lang_code: str | None,
         srt_text = build_srt(blocks)
 
         print(f"\n検出言語: {detected_lang}")
-        output_path = build_output_path(video_path, detected_lang)
+        # 言語コードを明示指定していた場合はそれをファイル名に使う
+        # (誤検出時も出力先が呼び出し側の期待通りになるようにするため)
+        output_path = build_output_path(video_path, lang_code or detected_lang)
         if not confirm_overwrite(output_path, force_overwrite):
             print("スキップしました。")
             return True

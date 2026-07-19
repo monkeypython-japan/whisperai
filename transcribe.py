@@ -29,8 +29,15 @@ def _segments_to_srt(segments: list) -> str:
     return "\n".join(lines)
 
 
-def transcribe(video_path: str) -> tuple[str, str]:
-    """音声認識を行い (SRT テキスト, 言語コード) を返す"""
+def transcribe(video_path: str, language: str | None = None) -> tuple[str, str]:
+    """音声認識を行い (SRT テキスト, 言語コード) を返す。
+
+    language を指定すると自動言語検出をスキップしてその言語でデコードする。
+    無音区間等でのハルシネーションにより言語が誤検出される実例
+    (無音中の空耳クレジット行につられ、実際は英語音声の動画がロシア語と
+    誤判定された等)があるため、呼び出し側で音声言語が分かっている場合は
+    指定を推奨する。
+    """
     import mlx_whisper
 
     print("音声認識中（Apple GPU 使用）", end="", flush=True)
@@ -39,6 +46,7 @@ def transcribe(video_path: str) -> tuple[str, str]:
         path_or_hf_repo=MLX_MODEL,
         verbose=False,
         word_timestamps=True,
+        language=language,
         # 無音区間のハルシネーション抑制
         no_speech_threshold=0.6,
         condition_on_previous_text=False,
